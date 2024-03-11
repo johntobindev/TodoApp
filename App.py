@@ -1,6 +1,8 @@
 import tkinter as tk
-from typing import List, TypedDict, Callable
+from typing import List, Callable
 from tkinter import messagebox
+from Database import Database
+from Types import TodoDict
 
 theme = {
     "header": "#002D62",
@@ -12,16 +14,11 @@ theme = {
 }
 
 
-class TodoDict(TypedDict):
-    text: str
-    is_complete: bool
-
-
 class Todo:
     root: tk.Tk
     list_frame: tk.Frame
-    index: int
-    text: str
+    todo_id: int
+    todo_text: str
     is_complete: bool
     delete_todo: Callable
     toggle_complete_todo: Callable
@@ -34,16 +31,16 @@ class Todo:
         self,
         root: tk.Tk,
         list_frame: tk.Frame,
-        index: int,
-        text: str,
+        todo_id: int,
+        todo_text: str,
         is_complete: bool,
         delete_todo: Callable,
         toggle_complete_todo: Callable
     ):
         self.root = root
         self.list_frame = list_frame
-        self.index = index
-        self.text = text
+        self.todo_id = todo_id
+        self.todo_text = todo_text
         self.is_complete = is_complete
         self.delete_todo = delete_todo
         self.toggle_complete_todo = toggle_complete_todo
@@ -59,7 +56,7 @@ class Todo:
 
         self.text_label = tk.Label(
             self.todo_frame,
-            text=self.text,
+            text=self.todo_text,
             anchor="w",
             justify="left",
             bg="white" if not self.is_complete else theme["is_complete"],
@@ -102,10 +99,10 @@ class Todo:
         self.delete_button.pack(side=tk.RIGHT, padx=2, pady=4)
 
     def handle_delete(self):
-        self.delete_todo(self.index)
+        self.delete_todo(self.todo_id)
 
     def handle_toggle_complete(self):
-        self.toggle_complete_todo(self.index)
+        self.toggle_complete_todo(self.todo_id)
 
     def destroy(self):
         self.todo_frame.destroy()
@@ -172,11 +169,13 @@ class TodoApp:
     todo_input: TodoInput
     todos: List[TodoDict]
     todo_objects: List[Todo]
+    database: Database
 
     def __init__(self):
         self.root = tk.Tk()
         self.todos = []
         self.todo_objects = []
+        self.database = Database()
         self.create_layout()
         self.display_todos()
 
@@ -203,12 +202,6 @@ class TodoApp:
         )
         self.header_label.pack(fill=tk.X)
 
-        # sample todos
-        todo1: TodoDict = {"text": "Lorem ipsum dolor sit amet adipisicing consectetur elit dolor sit amet adipisicing consectetur elit", "is_complete": False}
-        todo2: TodoDict = {"text": "Todo 2", "is_complete": False}
-        self.todos.append(todo1)
-        self.todos.append(todo2)
-
         # input
         self.todo_input = TodoInput(self.root, self.input_frame, self.add_todo)
 
@@ -218,29 +211,41 @@ class TodoApp:
 
         self.todo_objects.clear()
 
+        # Populate todos from db
+        self.todos = self.database.get_todos()
+
         for i in range(len(self.todos)):
             self.todo_objects.append(
                 Todo(
                     self.root,
                     self.list_frame,
-                    i,
-                    self.todos[i]['text'],
+                    self.todos[i]['todo_id'],
+                    self.todos[i]['todo_text'],
                     self.todos[i]['is_complete'],
                     self.delete_todo,
                     self.toggle_complete_todo,
                 )
             )
 
-    def add_todo(self, text: str):
-        self.todos.append({"text": text, "is_complete": False})
+    def add_todo(self, todo_text: str):
+        self.database.add_todo(todo_text)
         self.display_todos()
 
-    def delete_todo(self, index: int):
-        self.todos.pop(index)
+    def delete_todo(self, todo_id: int):
+        self.database.delete_todo(todo_id)
         self.display_todos()
 
-    def toggle_complete_todo(self, index: int):
-        self.todos[index]['is_complete'] = not self.todos[index]['is_complete']
+    def toggle_complete_todo(self, todo_id: int):
+        target_todo = None
+
+        for todo in self.todos:
+            if todo['todo_id'] == todo_id:
+                target_todo = todo
+                break
+
+        current_status = target_todo['is_complete']
+        is_complete_status_to_set = 1 if not current_status else 0
+        self.database.set_todo_complete_status(todo_id, is_complete_status_to_set)
         self.display_todos()
 
     def run(self):
