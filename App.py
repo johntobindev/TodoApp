@@ -4,6 +4,7 @@ from tkinter import messagebox
 from Database import Database
 from Types import TodoDict
 
+# Colours used throughout application
 theme = {
     "header": "#002D62",
     "button": "#007FFF",
@@ -46,6 +47,7 @@ class Todo:
         self.toggle_complete_todo = toggle_complete_todo
         self.create()
 
+    # Create the UI elements
     def create(self):
         self.todo_frame = tk.Frame(
             self.list_frame,
@@ -121,6 +123,7 @@ class TodoInput:
         self.add_todo = add_todo
         self.create()
 
+    # Create the UI elements
     def create(self):
         self.input_box = tk.Entry(
             font=("Segoe UI", 12),
@@ -179,6 +182,7 @@ class TodoApp:
         self.create_layout()
         self.display_todos()
 
+    # Create the app UI layout
     def create_layout(self):
         self.root.geometry("400x700")
         self.root.resizable(width=False, height=True)
@@ -202,9 +206,9 @@ class TodoApp:
         )
         self.header_label.pack(fill=tk.X)
 
-        # input
         self.todo_input = TodoInput(self.root, self.input_frame, self.add_todo)
 
+    # Display todos rebuilds the todolist and should be called after a change is made
     def display_todos(self):
         for obj in self.todo_objects:
             obj.destroy()
@@ -243,6 +247,7 @@ class TodoApp:
                 target_todo = todo
                 break
 
+        # Get the current state of is_complete and set the opposite
         current_status = target_todo['is_complete']
         is_complete_status_to_set = 1 if not current_status else 0
         self.database.set_todo_complete_status(todo_id, is_complete_status_to_set)

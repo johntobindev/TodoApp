@@ -94,5 +94,3 @@ class Database:
             })
 
         return todos
-
-
