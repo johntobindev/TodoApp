@@ -151,6 +151,9 @@ class TodoInput:
         self.input_box.focus_set()
         self.submit_button.pack(fill=tk.X)
 
+        # Set up listener for return key to submit input
+        self.root.bind("<Return>", lambda event: self.handle_submit())
+
     def handle_submit(self):
         if len(self.input_box.get()) == 0:
             messagebox.showwarning(
